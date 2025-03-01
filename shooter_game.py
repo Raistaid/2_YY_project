@@ -2,6 +2,7 @@ import os, sys
 from pygame import*
 from random import randint
 from time import time as timer
+from random import choice
 
 
 intro_text = ['Space Shooter',
@@ -26,7 +27,10 @@ win_height = 500
 screen_size = (700, 500)
 screen = display.set_mode(screen_size)
 FPS = 50
+all_sprites = sprite.Group()
 
+
+GRAVITY = 0.5
 score = 0
 goal = 20
 lost = 0
@@ -89,6 +93,46 @@ def show_screen(text, fon_file):
         clock.tick(FPS)
 
 
+class Particle(sprite.Sprite):
+    # сгенерируем частицы разного размера
+    fire = [load_image("star.png")]
+    for scale in (5, 10, 20):
+        fire.append(transform.scale(fire[0], (scale, scale)))
+
+    def __init__(self, pos, dx, dy):
+        super().__init__(all_sprites)
+        self.image = choice(self.fire)
+        self.rect = self.image.get_rect()
+
+        # у каждой частицы своя скорость — это вектор
+        self.velocity = [dx, dy]
+        # и свои координаты
+        self.rect.x, self.rect.y = pos
+        self.gravity = GRAVITY
+
+    def update(self):
+        # применяем гравитационный эффект:
+        # движение с ускорением под действием гравитации
+        self.velocity[1] += self.gravity
+        # перемещаем частицу
+        self.rect.x += self.velocity[0]
+        self.rect.y += self.velocity[1]
+        # убиваем, если частица ушла за экран
+        if not self.rect.colliderect(0, 0, screen_size[0], screen_size[1]):
+            self.kill()
+
+
+def create_particles(position):
+    # количество создаваемых частиц
+    particle_count = 15
+    # возможные скорости
+    numbers = range(-5, 6)
+    for _ in range(particle_count):
+        Particle(position, choice(numbers), choice(numbers))
+
+
+
+
 class GameSprite(sprite.Sprite):
     def __init__(self, player_image, player_x, player_y, size_x, size_y, player_speed):
         sprite.Sprite.__init__(self)
@@ -141,6 +185,7 @@ ship = Player(img_hero, 5, win_height - 100,80, 100, 10)
 monsters = sprite.Group()
 asteroids = sprite.Group()
 
+# генерация нло и астероидов
 for i in range(1, 3):
     monster = Enemy(img_enemy, randint(80, win_width - 80), -40,80, 50, randint(1, 5))
     monsters.add(monster)
@@ -168,14 +213,20 @@ while run:
                     rel_time = True
     if not finish:
         window.blit(background,(0,0))
+
+        all_sprites.update()
         ship.update()
         monsters.update()
         asteroids.update()
         bullets.update()
         ship.reset()
+
+        all_sprites.draw(window)
         monsters.draw(window)
         asteroids.draw(window)
         bullets.draw(window)
+
+        # определяет начало перезарядки
         if rel_time is True:
             now_time = timer()
             if now_time - last_time < 3:
@@ -186,7 +237,8 @@ while run:
                 rel_time = False
         collides = sprite.groupcollide(monsters, bullets, True, True)
 
-        for c in collides:
+        for c in collides: # засчитывает убитых нло и вызывает функцию генерирования частиц
+            create_particles((c.rect.x, c.rect.y))
             score = score + 1
             monster = Enemy(img_enemy,randint(80, win_width - 80), -40, 80, 50, randint(1,5))
             monsters.add(monster)
@@ -205,14 +257,15 @@ while run:
         text_lose = font2.render('Пропущено' + ' ' + str(lost), 1, (255, 55, 255))
         window.blit(text_lose,(10, 50))
         if life == 3:
-            life_color=(0, 150, 0)
+            life_color = (0, 150, 0)
         if life == 2:
-            life_color=(150, 150, 0)
+            life_color = (150, 150, 0)
         if life == 1:
             life_color = (150, 0, 0)
         text_life = font1.render(str(life), 1, life_color)
         window.blit(text_life,(650, 10))
         display.update()
+    # НАЧАЛО НОВОЙ ИГРЫ
     else:
         finish = False
         score = 0

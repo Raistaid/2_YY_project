@@ -7,6 +7,12 @@ from time import time as timer
 intro_text = ['Space Shooter',
               'Для передвижения влева и вправо используйте стрелочки,',
               'Чтобы стрелять нажимайте пробел.',
+              'У вас ограниченное количество пуль',
+              'поэтому периодически происходит перезарядка',
+              '10, пролетевших мимо целей = поражение',
+              'Берегитесь астероидов',
+              'Они не уничтожаются выстрелами',
+              '20 попаданий = победа',
               'Приятной игры!']
 font.init()
 font1 = font.SysFont('Arial', 80)
@@ -116,7 +122,8 @@ class Enemy(GameSprite):
         if self.rect.y > win_height:
             self.rect.x = randint(80, win_width - 80)
             self.rect.y = 0
-            lost = lost + 1
+            if self not in asteroids:
+               lost = lost + 1
 
 
 class Bullet(GameSprite):
@@ -132,12 +139,12 @@ window = display.set_mode((win_width,win_height))
 background = transform.scale(img_back,(win_width, win_height))
 ship = Player(img_hero, 5, win_height - 100,80, 100, 10)
 monsters = sprite.Group()
+asteroids = sprite.Group()
 
-for i in range(1, 6):
+for i in range(1, 3):
     monster = Enemy(img_enemy, randint(80, win_width - 80), -40,80, 50, randint(1, 5))
     monsters.add(monster)
-asteroids = sprite.Group()
-for i in range(1, 3):
+for i in range(1, 6):
     asteroid = Enemy(img_ast, randint(30, win_width - 30), -40, 80, 50, randint(1, 5))
     asteroids.add(asteroid)
 
@@ -178,6 +185,7 @@ while run:
                 num_fire = 0
                 rel_time = False
         collides = sprite.groupcollide(monsters, bullets, True, True)
+
         for c in collides:
             score = score + 1
             monster = Enemy(img_enemy,randint(80, win_width - 80), -40, 80, 50, randint(1,5))
@@ -194,7 +202,7 @@ while run:
             window.blit(win, (200, 200))
         text = font2.render('Счет' + ' ' + str(score),1, (255, 255, 255))
         window.blit(text, (10, 20))
-        text_lose = font2.render('Пропущено' + ' ' +str(lost), 1, (255, 55, 255))
+        text_lose = font2.render('Пропущено' + ' ' + str(lost), 1, (255, 55, 255))
         window.blit(text_lose,(10, 50))
         if life == 3:
             life_color=(0, 150, 0)
@@ -218,11 +226,10 @@ while run:
         for a in asteroids:
             a.kill()
         time.delay(3000)
-        for i in range(1, 6):
+        for i in range(1, 5):
             monster = Enemy(img_enemy, randint(80, win_width - 80), -40, 80, 50, randint(1, 5))
             monsters.add(monster)
-        for i in range(1, 3):
+        for i in range(1, 6):
             asteroid = Enemy(img_ast, randint(30, win_width - 30), -40, 80, 50, randint(1, 7))
             asteroids.add(asteroid)
     time.delay(50)
-

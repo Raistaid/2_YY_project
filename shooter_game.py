@@ -60,6 +60,7 @@ def load_image(name, color_key=None):
 mixer.init()
 mixer.music.load('space.mp3')
 mixer.music.play()
+explosion_sound = mixer.Sound('explosion2.0.ogg')
 fire_sound = mixer.Sound('fire.ogg')
 img_back = load_image('galaxy.jpg')
 img_bullet = load_image('bullet.png')
@@ -238,6 +239,7 @@ while run:
         collides = sprite.groupcollide(monsters, bullets, True, True)
 
         for c in collides: # засчитывает убитых нло и вызывает функцию генерирования частиц
+            explosion_sound.play()
             create_particles((c.rect.x, c.rect.y))
             score = score + 1
             monster = Enemy(img_enemy,randint(80, win_width - 80), -40, 80, 50, randint(1,5))
@@ -286,3 +288,4 @@ while run:
             asteroid = Enemy(img_ast, randint(30, win_width - 30), -40, 80, 50, randint(1, 7))
             asteroids.add(asteroid)
     time.delay(50)
+

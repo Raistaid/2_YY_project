@@ -1,4 +1,5 @@
 import os, sys
+import time
 from pygame import*
 from random import randint
 from time import time as timer
@@ -131,6 +132,36 @@ def create_particles(position):
     for _ in range(particle_count):
         Particle(position, choice(numbers), choice(numbers))
 
+explosions = []
+for i in range(1, 8):
+    filename = 'explosion_{}.png'.format(i)
+    img = load_image(filename)
+    img = transform.scale(img, (350, 350))
+    explosions.append(img)
+animation = sprite.Group()
+
+class AnimatedSprite(sprite.Sprite):
+    def __init__(self, center):
+        super().__init__(animation)
+        self.image = explosions[0]
+        self.rect = self.image.get_rect()
+        self.rect.center = center
+        self.frame = 0
+        self.last_update = time.get_ticks()
+        self.frame_rate = 50
+
+    def update(self):
+        moment = time.get_ticks()
+        if moment - self.last_update > self.frame_rate:
+            self.frame += 1
+            self.last_update = moment
+            if self.frame == 7:
+                self.kill()
+            else:
+                center = self.rect.center
+                self.image = explosions[self.frame]
+                self.rect = self.image.get_rect()
+                self.rect.center = center
 
 
 
@@ -219,10 +250,12 @@ while run:
         ship.update()
         monsters.update()
         asteroids.update()
+        animation.update()
         bullets.update()
         ship.reset()
 
         all_sprites.draw(window)
+        animation.draw(window)
         monsters.draw(window)
         asteroids.draw(window)
         bullets.draw(window)
@@ -240,6 +273,7 @@ while run:
 
         for c in collides: # засчитывает убитых нло и вызывает функцию генерирования частиц
             explosion_sound.play()
+            ex = AnimatedSprite(c.rect.center)
             create_particles((c.rect.x, c.rect.y))
             score = score + 1
             monster = Enemy(img_enemy,randint(80, win_width - 80), -40, 80, 50, randint(1,5))
@@ -288,4 +322,6 @@ while run:
             asteroid = Enemy(img_ast, randint(30, win_width - 30), -40, 80, 50, randint(1, 7))
             asteroids.add(asteroid)
     time.delay(50)
+
+
 
